@@ -1,6 +1,7 @@
 # Visibility-aware Cooperative Swarm Tracking
 
-Source code for the manuscript: *"Visibility-aware Cooperative Aerial Tracking with Decentralized LiDAR-based Swarm Robots".*
+Source code for the manuscript: *"Visibility-aware Cooperative Aerial Tracking with Decentralized LiDAR-based Swarm Robots".* This is an anonymous repository with all identity-revealing 
+information removed to maintain double-blind review integrity.
 
 ---
 
