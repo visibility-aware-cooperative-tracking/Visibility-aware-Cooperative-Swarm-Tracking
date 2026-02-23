@@ -3,6 +3,10 @@
 Source code for the manuscript: *"Visibility-aware Cooperative Aerial Tracking with Decentralized LiDAR-based Swarm Robots".* This is an anonymous repository with all identity-revealing 
 information removed to maintain double-blind review integrity.
 
+<p align="center">
+    <img src="https://github.com/user-attachments/assets/be1ed0f1-0214-4367-9b1c-08db279ada04" width="700" alt="swarm tracking">
+</p>
+
 ---
 
 ## Table of Contents
