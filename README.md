@@ -70,7 +70,7 @@ roslaunch st_planner swarm_tracking_three_mid360.launch
 
 Once launched, use the **"3D Nav Goal"** tool in RViz to set a navigation goal for the target. Then the drones start to track the target while maintaining visibility.
 
-https://github.com/user-attachments/assets/8cc67950-1f69-4c50-a1ca-abd1c74d3b1c
+https://github.com/user-attachments/assets/d20704d7-680f-41b7-9c61-90931ddff244
 
 ---
 
@@ -88,7 +88,7 @@ roslaunch st_planner swarm_tracking_four_heter.launch
 Use the **"3D Nav Goal"** tool in RViz to set the goal for the target. The drones then track the target and form a tetrahedral 
 distribution while avoiding occlusion.
 
-https://github.com/user-attachments/assets/05ebbfcb-8b91-4c7c-a2bd-7d41122032f9
+https://github.com/user-attachments/assets/db87252b-6752-4b0c-8f14-4ce31d3bb23c
 
 ---
 
@@ -103,7 +103,8 @@ source devel/setup.bash
 roslaunch st_planner ssdf_example.launch
 ```
 A cross-section of the updated SSDF:
-<img width="910" height="740" alt="Image" src="https://github.com/user-attachments/assets/507e6c4a-b950-428a-93d6-e4b7a3e3e2f8" />
+
+<img width="736" height="497" alt="Image" src="https://github.com/user-attachments/assets/82010f0a-952a-4b9b-a5ee-c7d6a5613ef8" />
 
 ---
 
