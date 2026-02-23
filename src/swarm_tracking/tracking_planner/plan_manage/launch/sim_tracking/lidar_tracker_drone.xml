@@ -1,0 +1,79 @@
+<launch>
+    <arg name="map_size_x"/>
+    <arg name="map_size_y"/>
+    <arg name="map_size_z"/>
+    <arg name="drone_id"/>
+    <arg name="odom_topic"/>
+    <arg name="cloud_topic"/>
+    <arg name="track_param"/>
+    <arg name="tracker_num"/>
+    <arg name="target_id"/>
+    <arg name="target_init_x"/>
+    <arg name="target_init_y"/>
+    <arg name="target_init_z"/>
+    <arg name="is_fov_omni"/>
+    <arg name="fov_theta"/>
+    <arg name="fov_ctr_theta"/>
+    <arg name="map_name"/>
+    <arg name="map_param"/>
+    <arg name="ciri_robot_r"/>
+    <arg name="inflation_step"/>
+    <arg name="LI_extrinsic"/>
+    <!-- main node -->
+
+    <node pkg="st_planner" name="drone_$(arg drone_id)_st_planner_node" type="st_planner_node" output="screen">
+        <remap from="~odom_world" to="/quad_$(arg drone_id)/$(arg odom_topic)"/>
+        <remap from="~mandatory_stop" to="/mandatory_stop_to_planner"/>
+        <remap from="~object" to="/quad_$(arg target_id)/$(arg odom_topic)"/>
+        <remap from="~trigger" to="/goal"/> 
+        <remap from="~planning/trajectory" to = "/drone_$(arg drone_id)_planning/trajectory"/>
+
+        <remap from="~planning/broadcast_traj_send" to = "/minco_traj_teammate_topic"/>
+        <remap from="~planning/broadcast_traj_recv" to = "/minco_traj_teammate_topic"/>
+        <remap from="/multi_map_manager/localmap_data_send" to="/multi_map_manager/localmap_data" />
+        <remap from="/multi_map_manager/localmap_data_recv" to="/multi_map_manager/localmap_data" />
+        <remap from="/multi_map_manager/chunk_stamps_send" to="/multi_map_manager/chunk_stamps" />
+        <remap from="/multi_map_manager/chunk_stamps_recv" to="/multi_map_manager/chunk_stamps" />
+
+        <param name="/multi_map_manager/drone_num" value="$(arg tracker_num)" type="int"/>
+        <param name="/multi_map_manager/drone_id" value="$(arg drone_id)" type="int"/>
+
+        <param name="rog_map/ros_callback/odom_topic" value="/quad_$(arg drone_id)/lidar_slam/odom"/>
+        <param name="rog_map/ros_callback/cloud_topic" value="/quad$(arg drone_id)_pcl_render_node/cloud"/>
+        <param name="rog_map/pcd_name" value="$(arg map_name)"/>
+
+        <param name="planning/drone_id" value="$(arg drone_id)" type="int"/>
+        <param name="planning/is_fov_omni" value="$(arg is_fov_omni)" type="bool"/>
+        <param name="planning/fov_theta" value="$(arg fov_theta)" type="double"/>
+        <param name="planning/fov_ctr_theta" value="$(arg fov_ctr_theta)" type="double"/>
+        <param name="planning/ciri_robot_r" value="$(arg ciri_robot_r)" type="double"/>
+        <param name="planning/LI_extrinsic" value="$(arg LI_extrinsic)" type="double"/>
+        <param name="rog_map/inflation_step" value="$(arg inflation_step)" type="int"/>
+
+        <remap from="/teammate_odom/UAV0" to="/quad_0/lidar_slam/odom" />
+        <remap from="/teammate_odom/UAV1" to="/quad_1/lidar_slam/odom" />
+        <remap from="/teammate_odom/UAV2" to="/quad_2/lidar_slam/odom" />
+        <remap from="/teammate_odom/UAV3" to="/quad_3/lidar_slam/odom" />
+        <remap from="/teammate_odom/UAV4" to="/quad_4/lidar_slam/odom" />
+        <remap from="/teammate_odom/UAV5" to="/quad_5/lidar_slam/odom" />
+        <remap from="/teammate_odom/UAV6" to="/quad_6/lidar_slam/odom" />
+        <remap from="/teammate_odom/UAV7" to="/quad_7/lidar_slam/odom" />
+        <remap from="/teammate_odom/UAV8" to="/quad_8/lidar_slam/odom" />
+        <remap from="/teammate_odom/UAV9" to="/quad_9/lidar_slam/odom" />
+   
+        <rosparam file="$(find st_planner)/config/$(arg track_param).yaml"/>
+        <rosparam file="$(find st_planner)/config/$(arg map_param).yaml"/>
+    </node>
+
+    <node pkg="st_planner" name="drone_$(arg drone_id)_traj_server" type="traj_server" output="screen">
+        <remap from="position_cmd" to = "/quad_$(arg drone_id)/planning/pos_cmd"/>
+        <remap from="~planning/trajectory" to="drone_$(arg drone_id)_planning/trajectory"/>
+        <remap from="~target_odom" to = "/quad_$(arg target_id)/$(arg odom_topic)"/>
+        <remap from="~self_odom" to = "/quad_$(arg drone_id)/$(arg odom_topic)"/>
+        <param name="traj_server/time_forward" value="1.0" type="double"/>
+        <param name="traj_server/is_fov_omni" value="$(arg is_fov_omni)" type="bool"/>
+        <param name="traj_server/is_target" value="false" type="bool"/>
+        <param name="traj_server/is_real_exp" value="false" type="bool"/>
+    </node>     
+    
+</launch>

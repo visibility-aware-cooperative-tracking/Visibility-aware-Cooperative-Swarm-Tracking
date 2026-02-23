@@ -1,0 +1,82 @@
+<launch>
+    <arg name="map_size_x"/>
+    <arg name="map_size_y"/>
+    <arg name="map_size_z"/>
+    <arg name="init_x"/>
+    <arg name="init_y"/>
+    <arg name="init_z"/>
+    <arg name="max_vel"/>
+    <arg name="max_acc"/>
+    <arg name="max_jer"/>
+    <arg name="drone_id"/>
+    <arg name="odom_topic"/>
+    <arg name="map_name"/>
+
+    <node pkg="st_planner" name="target_planner_node" type="target_planner_node" output="screen">
+        <remap from="~odom_world" to="/quad_$(arg drone_id)/lidar_slam/odom"/>
+        <remap from="~mandatory_stop" to="/mandatory_stop_to_planner"/>
+        <remap from="~goal" to="/goal"/>
+        <remap from="~planning/trajectory" to = "target/trajectory"/>
+      
+        <remap from="~planning/data_display" to = "/trajectory/data_display"/>
+        <remap from="~planning/broadcast_traj_send" to = "/broadcast_traj_from_planner"/>
+        <remap from="~planning/broadcast_traj_recv" to = "/broadcast_traj_to_planner"/>
+
+        <!-- planning fsm -->
+        <param name="fsm/flight_type" value="1" type="int"/>
+        <param name="fsm/thresh_no_replan_meter" value="1.0" type="double"/>
+        <param name="fsm/planning_horizon" value="7.5" type="double"/>
+        <param name="fsm/emergency_time" value="1.0" type="double"/>
+        <param name="fsm/realworld_experiment" value="false"/>
+        <param name="fsm/fail_safe" value="true"/>
+        <param name="corridor_bbd" value="1.6"/>
+        
+        <!-- planner manager -->
+        <param name="manager/max_vel" value="$(arg max_vel)" type="double"/>
+        <param name="manager/max_acc" value="$(arg max_acc)" type="double"/>
+        <param name="manager/polyTraj_piece_length" value="1.5" type="double"/>
+        <param name="manager/feasibility_tolerance" value="0.05" type="double"/>
+        <param name="manager/planning_horizon" value="7.5" type="double"/>
+        <param name="manager/use_distinctive_trajs" value="false" type="bool"/>
+        <param name="manager/drone_id" value="100"/>
+
+        <!-- trajectory optimization -->
+        <param name="fsm/predict_T" value="5.0" type="double"/>
+        <param name="fsm/predict_dt" value="1.0" type="double"/> 
+        <param name="fsm/max_follow_dist_" value="1.0" type="double"/>
+        <param name="fsm/thresh_replan_time" value="0.1" type="double"/>
+
+        <param name="env/stop_dist" value="0.2" type="double"/>
+        <param name="env/tolerance_d" value="0.2" type="double"/>
+
+        <param name="optimization/K" value="8" type="int"/>
+        <param name="optimization/vmax" value="$(arg max_vel)" type="double"/>
+        <param name="optimization/amax" value="$(arg max_acc)" type="double"/>
+        <param name="optimization/rhoT" value="10000.0" type="double"/>
+        <param name="optimization/rhoP" value="10000.0" type="double"/>
+        <param name="optimization/rhoV" value="1000.0" type="double"/>
+        <param name="optimization/rhoA" value="3000.0" type="double"/>
+        <param name="optimization/rhoTracking" value="500.0" type="double"/>
+        <param name="optimization/rhoSwarm" value="1000.0" type="double"/>
+        <param name="optimization/corridor_clearance" value="0.06" type="double"/>
+        <param name="optimization/swarm_clearance" value="0.7" type="double"/>
+
+        <param name="rog_map/ros_callback/odom_topic" value="/quad_$(arg drone_id)/lidar_slam/odom"/>
+        <param name="rog_map/ros_callback/cloud_topic" value="/quad$(arg drone_id)_pcl_render_node/cloud"/>
+        <param name="rog_map/pcd_name" value="$(arg map_name)"/>
+        <param name="planning/min_flight_height" value="-2.3"/>
+            
+        <rosparam file="$(find st_planner)/config/rogmap_target.yaml"/>
+    </node>
+
+
+    <!-- trajectory server -->
+    <node pkg="st_planner" name="target_traj_server" type="traj_server" output="screen">
+        <remap from="position_cmd" to = "/quad_$(arg drone_id)/planning/pos_cmd"/>
+        <remap from="~planning/trajectory" to="target/trajectory"/>
+        <param name="traj_server/time_forward" value="1.0" type="double"/>
+        <param name="traj_server/is_target" value="true" type="bool"/>
+    </node>
+
+
+</launch>

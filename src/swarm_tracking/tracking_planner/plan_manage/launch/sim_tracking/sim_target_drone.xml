@@ -1,0 +1,71 @@
+<launch>
+    <arg name="drone_id"/>
+    <arg name="uav_num_"/>
+    <arg name="map_size_x_"/>
+    <arg name="map_size_y_"/>
+    <arg name="map_size_z_"/>
+    <arg name="init_x_"/>
+    <arg name="init_y_"/>
+    <arg name="init_z_"/>
+    <arg name="init_yaw"/>
+    <arg name="odom_topic"/>
+    <arg name="lidar_type"/>
+    <arg name="map_name"/>
+    
+    <include file="$(find st_planner)/launch/sim_tracking/lidar_target_drone.xml">
+		<arg name="map_size_x" value="$(arg map_size_x_)"/>
+	    <arg name="map_size_y" value="$(arg map_size_y_)"/>
+    	<arg name="map_size_z" value="$(arg map_size_z_)"/>
+		<arg name="init_x"     value="$(arg init_x_)"/>
+		<arg name="init_y"     value="$(arg init_y_)"/>
+		<arg name="init_z"     value="$(arg init_z_)"/>
+		<arg name="max_vel"    value="1.6" />
+		<arg name="max_acc"    value="0.7" />
+    	<arg name="max_jer"    value="5.0"/>
+        <arg name="drone_id"   value="$(arg drone_id)"/>
+        <arg name="map_name" value="$(arg map_name)"/>
+	</include>
+
+    <node pkg="nodelet" type="nodelet" name="quad_$(arg drone_id)_manager" args="manager" output="screen">
+       <param name="num_worker_threads" value="16"/>
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="quad_$(arg drone_id)_so3_quadrotor" args="load so3_quadrotor/Nodelet quad_$(arg drone_id)_manager" output="screen">
+       <rosparam file="$(find st_planner)/config/so3_quadrotor.yaml"/>
+       <param name="init_x" value="$(arg init_x_)"/>
+       <param name="init_y" value="$(arg init_y_)"/>
+       <param name="init_z" value="$(arg init_z_)"/>
+       <remap from="~odom" to="/quad_$(arg drone_id)/lidar_slam/odom"/>
+       <remap from="~so3cmd" to="/quad_$(arg drone_id)/so3_cmd"/>
+       <remap from="~imu" to="/quad_$(arg drone_id)/lidar_slam/imu"/>
+       <remap from="~vis" to="vis"/>
+       <param name="odom_rate" value="100"/>
+    </node>
+
+    <node pkg="nodelet" type="nodelet" name="quad_$(arg drone_id)_so3_controller" args="load so3_controller/Nodelet quad_$(arg drone_id)_manager" output="screen">
+       <rosparam file="$(find st_planner)/config/so3_controller.yaml"/>
+       <remap from="~odom" to="/quad_$(arg drone_id)/lidar_slam/odom"/>
+       <remap from="~so3cmd" to="/quad_$(arg drone_id)/so3_cmd"/>
+       <remap from="~imu" to="quad_$(arg drone_id)/lidar_slam/imu"/>
+       <remap from="~position_cmd" to="/quad_$(arg drone_id)/planning/pos_cmd"/>
+    </node>
+
+   
+    <node pkg="odom_visualization" name="quad$(arg drone_id)_odom_visualization" type="odom_visualization"
+          output="screen">
+        <remap from="~odom" to="/quad_$(arg drone_id)/$(arg odom_topic)"/>
+        <remap from="~cmd" to="/quad_$(arg drone_id)/pos_cmd"/>
+        <param name="init_x" value="$(arg init_x_)"/>
+        <param name="init_y" value="$(arg init_y_)"/>
+        <param name="init_z" value="$(arg init_z_)"/>
+        <param name="color/a" value="1.0"/>
+        <param name="color/r" value="0.0"/>
+        <param name="color/g" value="0.8"/>
+        <param name="color/b" value="0.8"/>
+        <param name="covariance_scale" value="100.0"/>
+        <param name="robot_scale" value="1.0"/>
+        <param name="quadrotor_name" value="quad_$(arg drone_id)"/>
+        <param name="drone_id" value="$(arg drone_id)"/>
+    </node>
+
+</launch>

@@ -1,0 +1,5 @@
+<launch>
+
+    <node pkg="udp_bridge" name="udp_unicast" type="udp_unicast" output="screen" >
+    </node>
+</launch>

@@ -1,0 +1,389 @@
+<launch>
+    <arg name="drone_id"/>
+    <arg name="uav_num_"/>
+    <arg name="map_size_x_"/>
+    <arg name="map_size_y_"/>
+    <arg name="map_size_z_"/>
+    <arg name="init_x_"/>
+    <arg name="init_y_"/>
+    <arg name="init_z_"/>
+    <arg name="init_yaw"/>
+    <arg name="odom_topic"/>
+    <arg name="lidar_type"/>
+    <arg name="track_param"/>
+    <arg name="target_id"/>
+    <arg name="tracker_num"/>
+    <arg name="target_init_x"/>
+    <arg name="target_init_y"/>
+    <arg name="target_init_z"/>
+    <arg name="use_gpu"/>
+    <arg name="map_name"/>
+    <arg name="map_param"/>
+
+   <node pkg="nodelet" type="nodelet" name="quad_$(arg drone_id)_manager" args="manager" output="screen">
+       <param name="num_worker_threads" value="16"/>
+   </node>
+
+   <node pkg="nodelet" type="nodelet" name="quad_$(arg drone_id)_so3_quadrotor" args="load so3_quadrotor/Nodelet quad_$(arg drone_id)_manager" output="screen">
+       <rosparam file="$(find st_planner)/config/so3_quadrotor.yaml"/>
+       <param name="init_x" value="$(arg init_x_)"/>
+       <param name="init_y" value="$(arg init_y_)"/>
+       <param name="init_z" value="$(arg init_z_)"/>
+       <remap from="~odom" to="/quad_$(arg drone_id)/lidar_slam/odom"/>
+       <remap from="~so3cmd" to="/quad_$(arg drone_id)/so3_cmd"/>
+       <remap from="~imu" to="/quad_$(arg drone_id)/lidar_slam/imu"/>
+       <remap from="~vis" to="vis"/>
+       <param name="odom_rate" value="100"/>
+   </node>
+
+   <node pkg="nodelet" type="nodelet" name="quad_$(arg drone_id)_so3_controller" args="load so3_controller/Nodelet quad_$(arg drone_id)_manager" output="screen">
+       <rosparam file="$(find st_planner)/config/so3_controller.yaml"/>
+       <remap from="~odom" to="/quad_$(arg drone_id)/lidar_slam/odom"/>
+       <remap from="~so3cmd" to="/quad_$(arg drone_id)/so3_cmd"/>
+       <remap from="~imu" to="quad_$(arg drone_id)/lidar_slam/imu"/>
+       <remap from="~position_cmd" to="/quad_$(arg drone_id)/planning/pos_cmd"/>
+    </node>
+
+    <!-- Livox Avia launch-prefix="gdb -ex run -args" -->
+    <group if="$(eval lidar_type == 'avia')">
+
+        <include file="$(find st_planner)/launch/sim_tracking/lidar_tracker_drone.xml">
+            <arg name="map_size_x" value="$(arg map_size_x_)"/>
+            <arg name="map_size_y" value="$(arg map_size_y_)"/>
+            <arg name="map_size_z" value="$(arg map_size_z_)"/>
+            <arg name="drone_id"   value="$(arg drone_id)"/>
+            <arg name="odom_topic" value="$(arg odom_topic)"/>
+            <arg name="cloud_topic" value="/quad$(arg drone_id)_pcl_render_node/cloud"/>
+            <arg name="track_param" value="$(arg track_param)"/>
+            <arg name="target_id"  value="$(arg target_id)"/>
+            <arg name="tracker_num" value="$(arg tracker_num)"/>
+            <arg name="target_init_x" value="$(arg target_init_x)"/>
+            <arg name="target_init_y" value="$(arg target_init_y)"/>
+            <arg name="target_init_z" value="$(arg target_init_z)"/>
+            <arg name="is_fov_omni" value="false"/>
+            <arg name="fov_theta" value="0.35"/> 
+            <arg name="fov_ctr_theta" value="0.0"/>
+            <arg name="map_name" value="$(arg map_name)"/>
+            <arg name="map_param" value="$(arg map_param)"/>
+            <arg name="ciri_robot_r" value="0.195"/>
+            <arg name="inflation_step" value="2"/>
+            <arg name="LI_extrinsic" value="0.0"/>
+	    </include>
+
+        <group if="$(arg use_gpu)">
+            <node pkg="local_sensing_node" type="opengl_render_node" name="quad$(arg drone_id)_pcl_render_node" output="screen" 
+                args="$(arg map_name)">
+                <remap from="~global_map" to="/map_generator/global_cloud"/>
+                <remap from="~odometry" to="/quad_$(arg drone_id)/$(arg odom_topic)"/>
+
+                <param name="drone_id" value="$(arg drone_id)"/>
+                <param name="quadrotor_name" value="quad_$(arg drone_id)"/>
+                <param name="uav_num" value="$(arg uav_num_)"/>
+                <param name="is_360lidar" value="0"/>
+                <param name="is_updown" value="0"/>
+                <param name="sensing_horizon" value="20.0"/>
+                <param name="sensing_rate" value="15.0"/>
+                <param name="estimation_rate" value="20.0"/>
+                <param name="polar_resolution" value="0.2"/>
+                <param name="yaw_fov" value="70.4"/>
+                <param name="vertical_fov" value="77.2"/>
+                <param name="min_raylength" value="1.0"/>
+                <param name="livox_linestep" value="1.4"/>
+                <param name="curvature_limit" value="100.0"/>
+                <param name="hash_cubesize" value="5.0"/>
+                <param name="use_avia_pattern" value="1"/>
+
+                <param name="downsample_res" value="0.1"/>
+
+                <param name="dynobj_enable" value="0"/>
+                <param name="dynobject_size" value="0.8"/>
+                <param name="dynobject_num" value="10"/>
+                <param name="dyn_mode" value="0"/>
+                <param name="dyn_velocity" value="1.0"/>
+                <param name="use_uav_extra_model" value="1"/>
+                <param name="collisioncheck_enable" value="0"/>
+                <param name="collision_range" value="0.3"/>
+                <param name="output_pcd" value="0"/>
+            </node>
+        </group> 
+
+        <group unless="$(arg use_gpu)">
+            <node pkg="local_sensing_node" type="pcl_render_node" name="quad$(arg drone_id)_pcl_render_node"
+                output="screen">
+
+                <remap from="~global_map" to="/map_generator/global_cloud"/>
+                <remap from="~odometry" to="/quad_$(arg drone_id)/$(arg odom_topic)"/>
+
+                <param name="drone_id" value="$(arg drone_id)"/>
+                <param name="quadrotor_name" value="quad_$(arg drone_id)"/>
+                <param name="uav_num" value="$(arg uav_num_)"/>
+                <param name="is_360lidar" value="0"/>
+                <param name="sensing_horizon" value="15.0"/>
+                <param name="sensing_rate" value="7.0"/>
+                <param name="estimation_rate" value="10.0"/>
+                <param name="polar_resolution" value="0.2"/>
+                <param name="yaw_fov" value="70.4"/>
+                <param name="vertical_fov" value="77.2"/>
+                <param name="min_raylength" value="1.0"/>
+                <param name="livox_linestep" value="1.4"/>
+                <param name="curvature_limit" value="100.0"/>
+                <param name="hash_cubesize" value="5.0"/>
+                <param name="use_avia_pattern" value="1"/>
+
+                <param name="downsample_res" value="0.1"/>
+
+                <param name="dynobj_enable" value="0"/>
+                <param name="dynobject_size" value="0.8"/>
+                <param name="dynobject_num" value="10"/>
+                <param name="dyn_mode" value="0"/>
+                <param name="dyn_velocity" value="1.0"/>
+
+                <param name="use_uav_extra_model" value="1"/>
+
+                
+                <param name="collisioncheck_enable" value="0"/>
+                <param name="collision_range" value="0.3"/>
+
+                <param name="output_pcd" value="0"/>
+
+            </node>
+        </group>
+    </group>
+
+
+    <!-- VLP-32 launch-prefix="gdb -ex run -args"-->
+
+    <group if="$(eval lidar_type == 'mid360')">
+        <include file="$(find st_planner)/launch/sim_tracking/lidar_tracker_drone.xml">
+            <arg name="map_size_x" value="$(arg map_size_x_)"/>
+            <arg name="map_size_y" value="$(arg map_size_y_)"/>
+            <arg name="map_size_z" value="$(arg map_size_z_)"/>
+            <arg name="drone_id"   value="$(arg drone_id)"/>
+            <arg name="odom_topic" value="$(arg odom_topic)"/>
+            <arg name="cloud_topic" value="/quad$(arg drone_id)_pcl_render_node/cloud"/>
+            <arg name="track_param" value="$(arg track_param)"/>
+            <arg name="target_id"  value="$(arg target_id)"/>
+            <arg name="tracker_num" value="$(arg tracker_num)"/>
+            <arg name="target_init_x" value="$(arg target_init_x)"/>
+            <arg name="target_init_y" value="$(arg target_init_y)"/>
+            <arg name="target_init_z" value="$(arg target_init_z)"/>
+            <arg name="is_fov_omni" value="true"/>
+            <arg name="fov_theta" value="0.29"/>
+            <arg name="fov_ctr_theta" value="0.43"/>
+            <arg name="map_name" value="$(arg map_name)"/>
+            <arg name="map_param" value="$(arg map_param)"/>
+            <arg name="ciri_robot_r" value="0.195"/>
+            <arg name="inflation_step" value="2"/>
+            <arg name="LI_extrinsic" value="0.0"/>
+	    </include>
+
+        <group if="$(arg use_gpu)">
+            <node pkg="local_sensing_node" type="opengl_render_node" name="quad$(arg drone_id)_pcl_render_node" output="screen" 
+                args="$(arg map_name)">
+                <remap from="~global_map" to="/map_generator/global_cloud"/>
+                <remap from="~odometry" to="/quad_$(arg drone_id)/$(arg odom_topic)"/>
+
+                <param name="drone_id" value="$(arg drone_id)"/>
+                <param name="quadrotor_name" value="quad_$(arg drone_id)"/>
+                <param name="uav_num" value="$(arg uav_num_)"/>
+                <param name="is_360lidar" value="1"/>
+                <param name="is_updown" value="0"/>
+                <param name="sensing_horizon" value="15.0"/>
+                <param name="sensing_rate" value="15.0"/>
+                <param name="estimation_rate" value="20.0"/>
+                <param name="polar_resolution" value="0.2"/>
+                <param name="yaw_fov" value="360.0"/>
+                <param name="vertical_fov" value="70.0"/>
+                <param name="min_raylength" value="1.0"/>
+                <param name="livox_linestep" value="1.4"/>
+                <param name="curvature_limit" value="100.0"/>
+                <param name="hash_cubesize" value="5.0"/>
+                <param name="use_avia_pattern" value="0"/>
+                <param name="use_vlp32_pattern" value="0"/>
+                <param name="use_minicf_pattern" value="1"/>
+
+                <param name="downsample_res" value="0.1"/>
+
+                <param name="dynobj_enable" value="0"/>
+                <param name="dynobject_size" value="0.8"/>
+                <param name="dynobject_num" value="10"/>
+                <param name="dyn_mode" value="0"/>
+                <param name="dyn_velocity" value="1.0"/>
+
+                <param name="use_uav_extra_model" value="1"/>
+
+                <param name="collisioncheck_enable" value="0"/>
+                <param name="collision_range" value="0.3"/>
+                <param name="output_pcd" value="0"/>
+            </node>
+        </group>
+        
+        <group unless="$(arg use_gpu)">
+            <node pkg="local_sensing_node" type="pcl_render_node"
+                name="quad$(arg drone_id)_pcl_render_node" output="screen" > 
+                <remap from="~global_map" to="/map_generator/global_cloud"/>
+                <remap from="~odometry" to="/quad_$(arg drone_id)/$(arg odom_topic)"/>
+
+                <param name="drone_id" value="$(arg drone_id)"/>
+                <param name="quadrotor_name" value="quad_$(arg drone_id)"/>
+                <param name="uav_num" value="$(arg uav_num_)"/>
+                <param name="is_360lidar" value="1"/>
+                <param name="sensing_horizon" value="7.0"/>
+                <param name="sensing_rate" value="15.0"/>
+                <param name="estimation_rate" value="15.0"/>
+                <param name="polar_resolution" value="0.2"/>
+                <param name="yaw_fov" value="360.0"/>
+                <param name="vertical_fov" value="70.0"/>
+                <param name="min_raylength" value="1.0"/>
+                <param name="livox_linestep" value="1.4"/>
+                <param name="curvature_limit" value="100.0"/>
+                <param name="hash_cubesize" value="5.0"/>
+                <param name="use_avia_pattern" value="0"/>
+                <param name="use_vlp32_pattern" value="0"/>
+                <param name="use_minicf_pattern" value="1"/>
+
+                <param name="downsample_res" value="0.1"/>
+
+                <param name="dynobj_enable" value="0"/>
+                <param name="dynobject_size" value="0.6"/>
+                <param name="dynobject_num" value="30"/>
+                <param name="dyn_mode" value="2"/>
+                <param name="dyn_velocity" value="3.0"/>
+
+                <param name="use_uav_extra_model" value="1"/>
+
+                <param name="collisioncheck_enable" value="0"/>
+                <param name="collision_range" value="0.3"/>
+                <param name="output_pcd" value="0"/>
+            </node>
+        </group>
+    </group>
+
+
+    <group if="$(eval lidar_type == 'm_updown')">
+        <include file="$(find st_planner)/launch/sim_tracking/lidar_tracker_drone.xml">
+            <arg name="map_size_x" value="$(arg map_size_x_)"/>
+            <arg name="map_size_y" value="$(arg map_size_y_)"/>
+            <arg name="map_size_z" value="$(arg map_size_z_)"/>
+            <arg name="drone_id"   value="$(arg drone_id)"/>
+            <arg name="odom_topic" value="$(arg odom_topic)"/>
+            <arg name="cloud_topic" value="/quad$(arg drone_id)_pcl_render_node/cloud"/>
+            <arg name="track_param" value="$(arg track_param)"/>
+            <arg name="target_id"  value="$(arg target_id)"/>
+            <arg name="tracker_num" value="$(arg tracker_num)"/>
+            <arg name="target_init_x" value="$(arg target_init_x)"/>
+            <arg name="target_init_y" value="$(arg target_init_y)"/>
+            <arg name="target_init_z" value="$(arg target_init_z)"/>
+            <arg name="is_fov_omni" value="true"/>
+            <arg name="fov_theta" value="0.20"/>
+            <arg name="fov_ctr_theta" value="-0.43"/>
+            <arg name="map_name" value="$(arg map_name)"/>
+            <arg name="map_param" value="$(arg map_param)"/>
+            <arg name="ciri_robot_r" value="0.195"/>
+            <arg name="inflation_step" value="2"/> 
+            <arg name="LI_extrinsic" value="0.0"/>
+	    </include>
+
+        <group if="$(arg use_gpu)"> <!--upside-down mid360 needs gpu sim-->
+            <node pkg="local_sensing_node" type="opengl_render_node" name="quad$(arg drone_id)_pcl_render_node" output="screen" 
+                args="$(arg map_name)">
+                <remap from="~global_map" to="/map_generator/global_cloud"/>
+                <remap from="~odometry" to="/quad_$(arg drone_id)/$(arg odom_topic)"/>
+
+                <param name="drone_id" value="$(arg drone_id)"/>
+                <param name="quadrotor_name" value="quad_$(arg drone_id)"/>
+                <param name="uav_num" value="$(arg uav_num_)"/>
+                <param name="is_360lidar" value="1"/>
+                <param name="is_updown" value="1"/>
+                <param name="sensing_horizon" value="15.0"/>
+                <param name="sensing_rate" value="15.0"/>
+                <param name="estimation_rate" value="20.0"/>
+                <param name="polar_resolution" value="0.2"/>
+                <param name="yaw_fov" value="360.0"/>
+                <param name="vertical_fov" value="70.0"/>
+                <param name="min_raylength" value="1.0"/>
+                <param name="livox_linestep" value="1.4"/>
+                <param name="curvature_limit" value="100.0"/>
+                <param name="hash_cubesize" value="5.0"/>
+                <param name="use_avia_pattern" value="0"/>
+                <param name="use_vlp32_pattern" value="0"/>
+                <param name="use_minicf_pattern" value="1"/>
+
+                <param name="downsample_res" value="0.1"/>
+
+                <param name="dynobj_enable" value="0"/>
+                <param name="dynobject_size" value="0.8"/>
+                <param name="dynobject_num" value="10"/>
+                <param name="dyn_mode" value="0"/>
+                <param name="dyn_velocity" value="1.0"/>
+
+                <param name="use_uav_extra_model" value="1"/>
+
+        
+                <param name="collisioncheck_enable" value="0"/>
+                <param name="collision_range" value="0.3"/>
+                <param name="output_pcd" value="0"/>
+            </node>
+        </group>
+        
+        <group unless="$(arg use_gpu)">
+            <node pkg="local_sensing_node" type="pcl_render_node"
+                name="quad$(arg drone_id)_pcl_render_node" output="screen" > 
+                <remap from="~global_map" to="/map_generator/global_cloud"/>
+                <remap from="~odometry" to="/quad_$(arg drone_id)/$(arg odom_topic)"/>
+
+                <param name="drone_id" value="$(arg drone_id)"/>
+                <param name="quadrotor_name" value="quad_$(arg drone_id)"/>
+                <param name="uav_num" value="$(arg uav_num_)"/>
+                <param name="is_360lidar" value="1"/>
+                <param name="sensing_horizon" value="7.0"/>
+                <param name="sensing_rate" value="15.0"/>
+                <param name="estimation_rate" value="15.0"/>
+                <param name="polar_resolution" value="0.2"/>
+                <param name="yaw_fov" value="360.0"/>
+                <param name="vertical_fov" value="70.0"/>
+                <param name="min_raylength" value="1.0"/>
+                <param name="livox_linestep" value="1.4"/>
+                <param name="curvature_limit" value="100.0"/>
+                <param name="hash_cubesize" value="5.0"/>
+                <param name="use_avia_pattern" value="0"/>
+                <param name="use_vlp32_pattern" value="0"/>
+                <param name="use_minicf_pattern" value="1"/>
+
+                <param name="downsample_res" value="0.1"/>
+
+                <param name="dynobj_enable" value="0"/>
+                <param name="dynobject_size" value="0.6"/>
+                <param name="dynobject_num" value="30"/>
+                <param name="dyn_mode" value="2"/>
+                <param name="dyn_velocity" value="3.0"/>
+
+                <param name="use_uav_extra_model" value="1"/>
+
+                <param name="collisioncheck_enable" value="0"/>
+                <param name="collision_range" value="0.3"/>
+                <param name="output_pcd" value="0"/>
+            </node>
+        </group>
+    </group>
+
+    
+    
+    <node pkg="odom_visualization" name="quad$(arg drone_id)_odom_visualization" type="odom_visualization"
+          output="screen">
+        <remap from="~odom" to="/quad_$(arg drone_id)/$(arg odom_topic)"/>
+        <remap from="~cmd" to="/quad_$(arg drone_id)/pos_cmd"/>
+        <param name="init_x" value="$(arg init_x_)"/>
+        <param name="init_y" value="$(arg init_y_)"/>
+        <param name="init_z" value="$(arg init_z_)"/>
+        <param name="color/a" value="1.0"/>
+        <param name="color/r" value="1.0"/>
+        <param name="color/g" value="0.07"/>
+        <param name="color/b" value="0.57"/>
+        <param name="covariance_scale" value="100.0"/>
+        <param name="robot_scale" value="0.85"/>
+        <param name="quadrotor_name" value="quad$(arg drone_id)"/>
+        <param name="drone_id" value="$(arg drone_id)"/>
+    </node>
+
+</launch>

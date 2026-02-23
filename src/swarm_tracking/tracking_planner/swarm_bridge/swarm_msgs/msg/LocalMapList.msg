@@ -1,0 +1,4 @@
+LocalMapData[] LocalMapDataList
+uint8 from_drone_id
+int32 to_drone_id
+bool is_remedy_chunk

@@ -1,0 +1,76 @@
+rog_map:
+  load_pcd_en: true
+  is_real_exp: false
+  resolution: 0.1
+  inflation_resolution: 0.1
+  inflation_step: 3
+  unk_inflation_en: false
+  unk_inflation_step: 1
+  map_size: [ 80,80,10 ]
+
+  fix_map_origin: [ 0,0,0 ]
+  frontier_extraction_en: false
+
+  # Virtual ceil and ground
+  virtual_ceil_height: 4.5
+  virtual_ground_height: -4.0
+
+  block_inf_pt: false
+  kd_tree_en: false
+  safe_margin: 0.0
+  map_sliding:
+    enable: false
+    threshold: 0.05
+
+
+  ros_callback:
+    enable: true
+    odom_timeout: 2.0
+
+
+  visulization:
+    enbale: true
+    time_rate: 10
+    frame_rate: 0
+
+    range: [ 70, 70, 12 ]
+    frame_id: "world"
+    pub_unknown_map_en: false
+
+  intensity_thresh: -10
+  point_filt_num: 15
+
+  # Probabilistc update
+  raycasting:
+    enable: true
+    blind_filter_en: true
+    blind_filter_dis: 1.0
+    batch_update_size: 4
+    local_update_box: [ 17,17,9 ] 
+
+    ray_range: [ 0.2, 999 ]
+
+    p_min: 0.12
+    p_miss: 0.25
+    p_free: 0.451
+    p_occ: 0.85
+    p_hit: 0.85
+    p_max: 0.98
+
+    # The threshold of a non-occupied inf map grid to be considered as free. [0.0-1.0]
+    # which means for a gird contains [u] unknown grids and [f] known free grids.
+    # if [f/(f+u) > inf_map_known_free_thresh], the grid will be considered as free.
+    #  e.g. this thresh is set to 1.0, it measn a inf map grid is considered as free only if all grids in it are known free.
+    inf_map_known_free_thresh: 0.5
+
+# Map Share
+multi_map_manager:
+  voxel_num_thresh: 0
+  voxel_time_thresh: 0.2
+  is_real_experiment: false
+
+
+
+
+
+

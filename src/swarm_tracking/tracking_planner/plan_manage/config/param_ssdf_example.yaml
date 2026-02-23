@@ -1,0 +1,9 @@
+### For SSDF Example ###
+
+VSDF:
+  rd_lb: 0.5
+  rd_ub: 5.0
+  height_lb: -5.0
+  height_ub: 5.0
+  resolution: 0.1
+  inflation_step: 1 

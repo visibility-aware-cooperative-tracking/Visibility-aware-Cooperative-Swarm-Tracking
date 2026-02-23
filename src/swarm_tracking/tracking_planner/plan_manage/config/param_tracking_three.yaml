@@ -1,0 +1,82 @@
+### For multi tracking ###
+
+# general params
+planning:
+  predict_T: 1.5
+  predict_dt: 0.3
+  track_dist: 1.8
+  tolerance_d: 0.2
+  min_flight_height: 0.1
+  ciri_iter_num: 5
+  use_kino_search: true
+
+# finite state machine
+fsm:
+  thresh_replan_time: 0.120 
+  emergency_time: 1.0 
+  tracker_ids: [0, 1, 2]             # HERE specify the indices of the trackers in the swarm
+  relative_tracking_x: 0.0
+  relative_tracking_y: 0.0
+  relative_tracking_z: 0.0
+  replan_time_budget: 0.100 
+  target_vel_stop_bar: 0.30
+  self_vel_stop_bar: 0.45
+  flag_allow_hover: false
+
+# prediction
+prediction:
+  rho_a: 1.0
+  vmax: 6.0
+
+VSDF:
+  rd_lb: 0.5
+  rd_ub: 4.8
+  height_lb: 0.1
+  height_ub: 4.7
+  resolution: 0.1
+  inflation_step: 1 
+
+# back-end
+optimization:
+  max_outloop_num: 5
+  use_init_opt: true
+  K: 8
+  vmax: 3.7
+  amax: 4.9 
+  omega_max: 2.4
+  rhoT: 0.0   
+  rhoP: 50000000.0
+  rhoV: 10000.0
+  rhoA: 2000.0
+  rhoOmega: 5000.0
+  rhoSwarm: 80000.0
+  rhoOcclusion: 1000.0
+  rhoDistance: 2000.0
+  rhoSeparation: 3000.0 
+
+  rhoFOV_vertical: 150000.0 
+  rhoFOV_horizontal: 250000.0 
+  rhoVSDF: 100000.0 
+
+  corridor_clearance: 0.22 
+  swarm_clearance: 0.62
+  occlusion_clearance: 0.45 
+  vsdf_clearance: 0.1
+  des_delta_h: 1.4
+
+# front-end
+search: 
+  max_vel: 4.0
+  max_acc: 4.6
+  max_z: 0.7
+  allocate_num: 25000
+  resolution: 0.1
+  check_num: 2  
+  topo_check_time: 0.3 
+  swarm_clearance: 0.62 
+  occlusion_clearance: 0.45 
+
+  wei_vis: 1600.0  
+  wei_bea: 600.0 
+  wei_sep: 50.0 
+

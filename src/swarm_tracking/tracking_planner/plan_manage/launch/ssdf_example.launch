@@ -1,0 +1,18 @@
+<launch>
+    <arg name="ssdf_param" value="param_ssdf_example"/>
+    <arg name="map_param" value="rogmap_ssdf_example"/>
+
+    <node name="rvizvisualisation0" pkg="rviz" type="rviz" output="log" args="-d $(find st_planner)/config/rviz_ssdf_scene.rviz" />
+
+    <arg name="map_name" value="$(find map_generator)/resource/ssdf_example_scene.pcd"/>
+    <node pkg="map_generator" name="map_pub" type="map_pub" output="screen"
+        args="$(arg map_name)">
+    </node>
+
+    <node pkg="st_planner" name="ssdf_example_node" type="ssdf_example_node" output="screen">
+        <param name="rog_map/pcd_name" value="$(arg map_name)"/>
+        <rosparam file="$(find st_planner)/config/$(arg ssdf_param).yaml"/>
+        <rosparam file="$(find st_planner)/config/$(arg map_param).yaml"/>
+    </node>
+
+</launch>
